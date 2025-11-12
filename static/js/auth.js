@@ -244,7 +244,7 @@ function handlePasswordLogin(e) {
 
     // 跳转到首页
     setTimeout(() => {
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }, 1000);
   }, 1000);
 
@@ -261,7 +261,7 @@ function handlePasswordLogin(e) {
   //     localStorage.setItem('token', data.token);
   //     localStorage.setItem('user', JSON.stringify(data.user));
   //     setTimeout(() => {
-  //       window.location.href = 'index.html';
+  //       window.location.href = '/';
   //     }, 1000);
   //   } else {
   //     showMessage(data.message || '登录失败', 'error');
@@ -309,7 +309,7 @@ function handleSmsLogin(e) {
   setTimeout(() => {
     showMessage('登录成功！', 'success');
     setTimeout(() => {
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }, 1000);
   }, 1000);
 
