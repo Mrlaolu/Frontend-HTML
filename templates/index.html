@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iCalligraphy · 发现与分享书法之美</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="../static/css/main.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html" aria-label="iCalligraphy 首页">
+          <span class="brand-logo" aria-hidden="true">藝</span>
+          <span class="brand-text">iCalligraphy</span>
+        </a>
+        <nav class="nav">
+          <a href="index.html" class="active">首页</a>
+          <a href="work_upload.html">作品上传</a>
+          <a href="search.html">检索</a>
+          <a href="my_collections.html">我的字集</a>
+          <a href="profile.html">个人中心</a>
+          <a href="community.html">社区</a>
+          <a href="review_center.html">审核中心</a>
+          <a href="auth.html" class="auth-link">登录/注册</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- 英雄区：宣纸背景 + 搜索入口 -->
+      <section class="hero">
+        <div class="container hero-inner">
+          <div class="hero-text">
+            <h1>发现与分享书法之美</h1>
+            <p class="subtitle">浏览经典与原创作品，检索单字切片，创建属于你的字集。</p>
+          </div>
+          <div class="search-box" role="search" aria-label="全局检索">
+            <div class="search-type" aria-label="检索类型切换">
+              <button class="type-btn active" data-type="works" aria-pressed="true">作品</button>
+              <button class="type-btn" data-type="characters" aria-pressed="false">单字</button>
+              <button class="type-btn" data-type="collections" aria-pressed="false">字集</button>
+            </div>
+            <div class="search-input">
+              <input id="globalSearchInput" type="search" placeholder="搜索作者/作品/风格…" aria-label="搜索关键词" />
+              <button id="searchBtn" class="btn btn-primary" aria-label="搜索">搜索</button>
+            </div>
+            <p class="search-tip">提示：输入“王羲之 兰亭”可快速检索相关作品</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 功能引导卡片 -->
+      <section class="feature-cards">
+        <div class="container grid-3">
+          <article class="card">
+            <h3>精美作品</h3>
+            <p>浏览经典与现代书法作品，支持缩放和拖拽，沉浸式体验。</p>
+          </article>
+          <article class="card">
+            <h3>智能检索</h3>
+            <p>多维度筛选与实时搜索，作品/单字/字集一键切换。</p>
+          </article>
+          <article class="card">
+            <h3>互动社区</h3>
+            <p>发布帖子、点赞评论、每日打卡，共同交流书法心得。</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 筛选与视图切换 -->
+      <section class="toolbar">
+        <div class="container toolbar-inner">
+          <div class="filters" aria-label="筛选条件">
+            <div class="filter-group">
+              <span class="label">风格：</span>
+              <button class="chip" data-style="kai">楷</button>
+              <button class="chip" data-style="xing">行</button>
+              <button class="chip" data-style="cao">草</button>
+              <button class="chip" data-style="li">隶</button>
+              <button class="chip" data-style="zhuan">篆</button>
+            </div>
+            <div class="filter-group">
+              <label for="authorInput" class="label">作者：</label>
+              <input id="authorInput" type="text" placeholder="如 王羲之" />
+            </div>
+            <div class="filter-group">
+              <label for="sourceSelect" class="label">来源：</label>
+              <select id="sourceSelect">
+                <option value="all">全部</option>
+                <option value="system">系统</option>
+                <option value="user">用户</option>
+              </select>
+            </div>
+          </div>
+          <div class="view-switch" aria-label="视图切换">
+            <button id="gridViewBtn" class="view-btn active" aria-pressed="true">网格</button>
+            <button id="listViewBtn" class="view-btn" aria-pressed="false">列表</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 作品展示：网格视图 -->
+      <section id="worksGrid" class="works container" aria-label="作品展示">
+        <div class="works-grid">
+          <!-- 示例卡片（可替换为动态数据） -->
+          <article class="work-card">
+            <div class="thumb" aria-hidden="true"></div>
+            <div class="work-info">
+              <h4>兰亭集序</h4>
+              <p class="meta">作者：王羲之 · 风格：行书 · 字数：324</p>
+            </div>
+          </article>
+          <article class="work-card">
+            <div class="thumb" aria-hidden="true"></div>
+            <div class="work-info">
+              <h4>祭侄文稿</h4>
+              <p class="meta">作者：颜真卿 · 风格：草书 · 字数：220</p>
+            </div>
+          </article>
+          <article class="work-card">
+            <div class="thumb" aria-hidden="true"></div>
+            <div class="work-info">
+              <h4>多宝塔碑</h4>
+              <p class="meta">作者：颜真卿 · 风格：楷书 · 字数：160</p>
+            </div>
+          </article>
+          <article class="work-card">
+            <div class="thumb" aria-hidden="true"></div>
+            <div class="work-info">
+              <h4>黄庭坚诗帖</h4>
+              <p class="meta">作者：黄庭坚 · 风格：行书 · 字数：96</p>
+            </div>
+          </article>
+          <article class="work-card">
+            <div class="thumb" aria-hidden="true"></div>
+            <div class="work-info">
+              <h4>张迁碑</h4>
+              <p class="meta">作者：东汉 · 风格：隶书 · 字数：740</p>
+            </div>
+          </article>
+          <article class="work-card">
+            <div class="thumb" aria-hidden="true"></div>
+            <div class="work-info">
+              <h4>石门颂</h4>
+              <p class="meta">作者：魏碑 · 风格：楷书 · 字数：500</p>
+            </div>
+          </article>
+        </div>
+        <div class="pagination">
+          <button class="page-btn" disabled>上一页</button>
+          <span class="page-info">第 1 页 · 共 10 页</span>
+          <button class="page-btn">下一页</button>
+        </div>
+      </section>
+
+      <!-- 作品展示：列表视图（默认隐藏） -->
+      <section id="worksList" class="works container hidden" aria-label="作品列表">
+        <div class="list-wrapper">
+          <div class="list-row">
+            <span class="list-title">兰亭集序</span>
+            <span class="list-meta">王羲之 · 行书 · 324字</span>
+          </div>
+          <div class="list-row">
+            <span class="list-title">祭侄文稿</span>
+            <span class="list-meta">颜真卿 · 草书 · 220字</span>
+          </div>
+          <div class="list-row">
+            <span class="list-title">多宝塔碑</span>
+            <span class="list-meta">颜真卿 · 楷书 · 160字</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© 2025 iCalligraphy · 传统与创新并重</p>
+        <p class="note">本页为示例界面，真实数据与交互将在后续接入。</p>
+      </div>
+    </footer>
+
+    <script src="../static/js/main.js" defer></script>
+  </body>
+</html>
