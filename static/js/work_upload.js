@@ -441,6 +441,12 @@ function initStep3() {
       saveDraft();
     });
 
+    // 生成字符预览缩略图
+    const previewHolder = item.querySelector('.char-label-preview');
+    try {
+      renderCharPreview(previewHolder, box);
+    } catch (_) {}
+
     charLabels.appendChild(item);
   }
 
@@ -456,6 +462,69 @@ function initStep3() {
     uploadState.charBoxes.forEach(box => {
       ctx.strokeRect(box.x, box.y, box.width, box.height);
     });
+  }
+
+  // 基于上传图片与标注框，绘制单字预览
+  function renderCharPreview(containerEl, box) {
+    if (!containerEl || !box || !uploadState.uploadedImage) return;
+
+    // 目标预览尺寸
+    const PREVIEW_SIZE = 120;
+    const canvasThumb = document.createElement('canvas');
+    canvasThumb.width = PREVIEW_SIZE;
+    canvasThumb.height = PREVIEW_SIZE;
+    const cctx = canvasThumb.getContext('2d');
+    // 白底
+    cctx.fillStyle = '#fff';
+    cctx.fillRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+
+    const img = new Image();
+    img.onload = function() {
+      // 将画布坐标映射回原图坐标
+      // 已知：在 initCanvas 中 canvas 宽度为 min(img.width, 800)，高度按比例缩放
+      // 因此：scaleX = canvas.width / img.width
+      // 反推原图坐标：srcX = box.x / scaleX
+      const scaleX = canvas.width / img.width;
+      const scaleY = canvas.height / img.height;
+
+      // 避免 0 值
+      const safeScaleX = scaleX || 1;
+      const safeScaleY = scaleY || 1;
+
+      let srcX = box.x / safeScaleX;
+      let srcY = box.y / safeScaleY;
+      let srcW = box.width / safeScaleX;
+      let srcH = box.height / safeScaleY;
+
+      // 边界裁剪
+      srcX = Math.max(0, Math.min(srcX, img.width));
+      srcY = Math.max(0, Math.min(srcY, img.height));
+      srcW = Math.max(1, Math.min(srcW, img.width - srcX));
+      srcH = Math.max(1, Math.min(srcH, img.height - srcY));
+
+      // 使预览保持内容比例，居中显示
+      const boxAspect = srcW / srcH;
+      let destW = PREVIEW_SIZE;
+      let destH = PREVIEW_SIZE;
+      let dx = 0;
+      let dy = 0;
+      if (boxAspect > 1) {
+        // 宽图，横向贴满
+        destH = Math.round(PREVIEW_SIZE / boxAspect);
+        dy = Math.floor((PREVIEW_SIZE - destH) / 2);
+      } else if (boxAspect < 1) {
+        // 高图，纵向贴满
+        destW = Math.round(PREVIEW_SIZE * boxAspect);
+        dx = Math.floor((PREVIEW_SIZE - destW) / 2);
+      }
+
+      cctx.drawImage(img, srcX, srcY, srcW, srcH, dx, dy, destW, destH);
+
+      // 将缩略图插入容器
+      containerEl.innerHTML = '';
+      containerEl.appendChild(canvasThumb);
+    };
+    img.src = uploadState.uploadedImage;
   }
 
   // 全局删除函数
