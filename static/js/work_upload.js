@@ -245,9 +245,81 @@ function initStep3() {
   }
 
   // 智能识别（模拟）
-  autoSplitBtn.addEventListener('click', () => {
-    alert('智能识别功能开发中，请使用手动添加');
-  });
+	autoSplitBtn.addEventListener('click', async () => {
+		if (!uploadState.uploadedImage) {
+			alert('请先上传图片');
+			return;
+		}
+		autoSplitBtn.disabled = true;
+		autoSplitBtn.textContent = '识别中...';
+		try {
+			const resp = await fetch('/api/works/ocr', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					image: uploadState.uploadedImage, // dataURL
+					det_mode: 'auto',
+					version: 'v2',
+					return_position: true
+				})
+			});
+			const data = await resp.json();
+			if (!resp.ok || data.message !== 'success') {
+				throw new Error(data.info || '识别失败');
+			}
+			// 将返回的 boxes 按画布尺寸进行缩放并填充到 charBoxes
+			applyOcrBoxesToCanvas(data, canvas);
+			updateBoxCount();
+			initCanvas();
+			alert('智能识别完成！结果已临时保存到服务器。');
+			// 可按需使用 data.temp_json_path
+		} catch (e) {
+			console.error(e);
+			alert('智能识别失败，请稍后重试。');
+		} finally {
+			autoSplitBtn.disabled = false;
+			autoSplitBtn.textContent = '智能识别';
+		}
+	});
+
+	function applyOcrBoxesToCanvas(ocrResult, canvasEl) {
+		const boxes = Array.isArray(ocrResult.boxes) ? ocrResult.boxes : [];
+		if (boxes.length === 0) return;
+
+		// 计算缩放比例：使用原图尺寸与当前画布尺寸
+		let origW, origH;
+		if (ocrResult.image_size && ocrResult.image_size.width && ocrResult.image_size.height) {
+			origW = ocrResult.image_size.width;
+			origH = ocrResult.image_size.height;
+		} else {
+			// 兜底：通过创建图片对象获取原图尺寸
+			// 注意：这里是同步读取已有 dataURL 的 natural size
+			const tmp = new Image();
+			tmp.src = uploadState.uploadedImage;
+			origW = tmp.naturalWidth || canvasEl.width;
+			origH = tmp.naturalHeight || canvasEl.height;
+		}
+		const scaleX = canvasEl.width / origW;
+		const scaleY = canvasEl.height / origH;
+
+		// 清空原有标注
+		uploadState.charBoxes = [];
+		document.getElementById('charLabels').innerHTML = '';
+
+		boxes.forEach((b, idx) => {
+			if (!b || !Array.isArray(b.position) || b.position.length < 4) return;
+			const [x1, y1, x2, y2] = b.position;
+			const x = x1 * scaleX;
+			const y = y1 * scaleY;
+			const w = (x2 - x1) * scaleX;
+			const h = (y2 - y1) * scaleY;
+			const box = { x, y, width: w, height: h, char: (b.text || '').slice(0, 1) };
+			uploadState.charBoxes.push(box);
+			addCharLabel(box, uploadState.charBoxes.length - 1);
+		});
+
+		saveDraft();
+	}
 
   // 手动添加
   addBoxBtn.addEventListener('click', () => {
