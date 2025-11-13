@@ -306,17 +306,51 @@ function initStep3() {
 		uploadState.charBoxes = [];
 		document.getElementById('charLabels').innerHTML = '';
 
-		boxes.forEach((b, idx) => {
+		// 先按行、词顺序排序
+		boxes.sort((a, b) => {
+			const la = typeof a.line_index === 'number' ? a.line_index : 0;
+			const lb = typeof b.line_index === 'number' ? b.line_index : 0;
+			if (la !== lb) return la - lb;
+			const wa = typeof a.word_index === 'number' ? a.word_index : 0;
+			const wb = typeof b.word_index === 'number' ? b.word_index : 0;
+			return wa - wb;
+		});
+
+		boxes.forEach((b) => {
 			if (!b || !Array.isArray(b.position) || b.position.length < 4) return;
 			const [x1, y1, x2, y2] = b.position;
 			const x = x1 * scaleX;
 			const y = y1 * scaleY;
 			const w = (x2 - x1) * scaleX;
 			const h = (y2 - y1) * scaleY;
-			const box = { x, y, width: w, height: h, char: (b.text || '').slice(0, 1) };
+			const box = { x, y, width: w, height: h, char: (b.text || '').slice(0, 1), lineIndex: b.line_index, wordIndex: b.word_index };
 			uploadState.charBoxes.push(box);
 			addCharLabel(box, uploadState.charBoxes.length - 1);
 		});
+
+		// 生成整段识别文本（按行聚合）
+		try {
+			const byLine = new Map();
+			uploadState.charBoxes.forEach(b => {
+				const lineKey = typeof b.lineIndex === 'number' ? b.lineIndex : 0;
+				if (!byLine.has(lineKey)) byLine.set(lineKey, []);
+				byLine.get(lineKey).push(b);
+			});
+			const lines = Array.from(byLine.keys()).sort((a, b) => a - b).map(k => {
+				const arr = byLine.get(k);
+				arr.sort((a, b) => {
+					const wa = typeof a.wordIndex === 'number' ? a.wordIndex : 0;
+					const wb = typeof b.wordIndex === 'number' ? b.wordIndex : 0;
+					return wa - wb;
+				});
+				return arr.map(it => it.char || '').join('');
+			});
+			const fullText = lines.join('\n');
+			const ocrTextEl = document.getElementById('ocrText');
+			if (ocrTextEl) {
+				ocrTextEl.value = fullText;
+			}
+		} catch (_) {}
 
 		saveDraft();
 	}
@@ -398,6 +432,10 @@ function initStep3() {
     `;
 
     const input = item.querySelector('.char-label-input');
+    // 自动填入识别字符
+    if (box && typeof box.char === 'string') {
+      input.value = box.char;
+    }
     input.addEventListener('input', function() {
       uploadState.charBoxes[index].char = this.value;
       saveDraft();
