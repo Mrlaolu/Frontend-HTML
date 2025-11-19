@@ -1,6 +1,8 @@
 // 读帖页面交互脚本
 class ReadPostApp {
   constructor() {
+    console.log('ReadPostApp 初始化开始');
+    
     this.uploadArea = document.getElementById('uploadArea');
     this.uploadPlaceholder = document.getElementById('uploadPlaceholder');
     this.imageDisplay = document.getElementById('imageDisplay');
@@ -15,6 +17,16 @@ class ReadPostApp {
     this.loadingOverlay = document.getElementById('loadingOverlay');
     this.toast = document.getElementById('toast');
 
+    // 检查关键元素是否存在
+    if (!this.imageCanvas) {
+      console.error('错误: imageCanvas 元素未找到');
+      return;
+    }
+    if (!this.imageWrapper) {
+      console.error('错误: imageWrapper 元素未找到');
+      return;
+    }
+
     this.ctx = this.imageCanvas.getContext('2d');
     this.currentImage = null;
     this.imageData = null;
@@ -23,6 +35,7 @@ class ReadPostApp {
     this.isDragging = false;
     this.draggedPoint = null;
 
+    console.log('ReadPostApp 初始化成功');
     this.init();
   }
 
@@ -85,19 +98,36 @@ class ReadPostApp {
 
   // 加载图片
   loadImage(file) {
+    console.log('开始加载图片:', file.name);
     const reader = new FileReader();
     reader.onload = (e) => {
+      console.log('文件读取完成');
       const img = new Image();
       img.onload = () => {
+        console.log('图片加载完成，尺寸:', img.width, 'x', img.height);
         this.currentImage = img;
         this.imageData = file;
-        this.displayImage();
-        this.analyzeBtn.disabled = false;
+        
+        // 先显示容器，再绘制图片
         this.uploadPlaceholder.style.display = 'none';
         this.imageDisplay.style.display = 'block';
-        this.showToast('图片上传成功', 'success');
+        
+        // 使用setTimeout确保DOM更新后再绘制
+        setTimeout(() => {
+          this.displayImage();
+          this.analyzeBtn.disabled = false;
+          this.showToast('图片上传成功', 'success');
+        }, 50);
+      };
+      img.onerror = (err) => {
+        console.error('图片加载失败:', err);
+        this.showToast('图片加载失败', 'error');
       };
       img.src = e.target.result;
+    };
+    reader.onerror = (err) => {
+      console.error('文件读取失败:', err);
+      this.showToast('文件读取失败', 'error');
     };
     reader.readAsDataURL(file);
   }
@@ -108,20 +138,33 @@ class ReadPostApp {
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     
+    if (containerWidth === 0 || containerHeight === 0) {
+      console.error('容器尺寸为0，无法显示图片');
+      return;
+    }
+    
     const imgWidth = this.currentImage.width;
     const imgHeight = this.currentImage.height;
     
-    // 计算缩放比例，确保图片占满容器
+    // 计算缩放比例，使图片适配容器（保持宽高比）
     const scaleX = containerWidth / imgWidth;
     const scaleY = containerHeight / imgHeight;
-    const scale = Math.max(scaleX, scaleY);
+    // 使用Math.min确保图片完全在容器内，或使用Math.max让图片填满容器
+    const scale = Math.min(scaleX, scaleY);
     
     const displayWidth = imgWidth * scale;
     const displayHeight = imgHeight * scale;
     
-    // 设置canvas尺寸
+    // 设置canvas的实际尺寸（用于绘制）
     this.imageCanvas.width = displayWidth;
     this.imageCanvas.height = displayHeight;
+    
+    // 设置canvas的CSS显示尺寸（与实际尺寸相同，避免拉伸）
+    this.imageCanvas.style.width = displayWidth + 'px';
+    this.imageCanvas.style.height = displayHeight + 'px';
+    
+    // 清除canvas
+    this.ctx.clearRect(0, 0, displayWidth, displayHeight);
     
     // 绘制图片
     this.ctx.drawImage(this.currentImage, 0, 0, displayWidth, displayHeight);
@@ -130,6 +173,16 @@ class ReadPostApp {
     this.scale = scale;
     this.displayWidth = displayWidth;
     this.displayHeight = displayHeight;
+    
+    console.log('图片已显示:', {
+      containerWidth,
+      containerHeight,
+      imgWidth,
+      imgHeight,
+      scale,
+      displayWidth,
+      displayHeight
+    });
   }
 
   // 调用AI分析
@@ -234,8 +287,13 @@ class ReadPostApp {
 
   // 绘制关键点
   drawKeypoints() {
-    // 清除之前的点
-    this.clearKeypoints();
+    if (!this.currentImage || !this.displayWidth || !this.displayHeight) {
+      console.error('图片数据不完整，无法绘制');
+      return;
+    }
+    
+    // 清除canvas
+    this.ctx.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
     
     // 重绘图片
     this.ctx.drawImage(this.currentImage, 0, 0, this.displayWidth, this.displayHeight);
