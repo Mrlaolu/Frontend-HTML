@@ -1,0 +1,408 @@
+// 读帖页面交互脚本
+class ReadPostApp {
+  constructor() {
+    this.uploadArea = document.getElementById('uploadArea');
+    this.uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    this.imageDisplay = document.getElementById('imageDisplay');
+    this.imageCanvas = document.getElementById('imageCanvas');
+    this.imageWrapper = document.getElementById('imageWrapper');
+    this.fileInput = document.getElementById('fileInput');
+    this.selectFileBtn = document.getElementById('selectFileBtn');
+    this.analyzeBtn = document.getElementById('analyzeBtn');
+    this.saveBtn = document.getElementById('saveBtn');
+    this.annotationsList = document.getElementById('annotationsList');
+    this.annotationCount = document.getElementById('annotationCount');
+    this.loadingOverlay = document.getElementById('loadingOverlay');
+    this.toast = document.getElementById('toast');
+
+    this.ctx = this.imageCanvas.getContext('2d');
+    this.currentImage = null;
+    this.imageData = null;
+    this.annotations = [];
+    this.keypoints = [];
+    this.isDragging = false;
+    this.draggedPoint = null;
+
+    this.init();
+  }
+
+  init() {
+    // 绑定事件
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    // 文件选择
+    this.selectFileBtn.addEventListener('click', () => this.fileInput.click());
+    this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+
+    // 拖拽上传
+    this.uploadPlaceholder.addEventListener('dragover', (e) => this.handleDragOver(e));
+    this.uploadPlaceholder.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+    this.uploadPlaceholder.addEventListener('drop', (e) => this.handleDrop(e));
+
+    // 按钮点击
+    this.analyzeBtn.addEventListener('click', () => this.analyzeCharacter());
+    this.saveBtn.addEventListener('click', () => this.saveAnnotations());
+
+    // Canvas 交互
+    this.imageCanvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+    this.imageCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+    this.imageCanvas.addEventListener('mouseup', () => this.handleMouseUp());
+    this.imageCanvas.addEventListener('mouseleave', () => this.handleMouseUp());
+  }
+
+  // 处理文件选择
+  handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+      this.loadImage(file);
+    }
+  }
+
+  // 处理拖拽
+  handleDragOver(e) {
+    e.preventDefault();
+    this.uploadPlaceholder.classList.add('dragover');
+  }
+
+  handleDragLeave(e) {
+    e.preventDefault();
+    this.uploadPlaceholder.classList.remove('dragover');
+  }
+
+  handleDrop(e) {
+    e.preventDefault();
+    this.uploadPlaceholder.classList.remove('dragover');
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      this.loadImage(file);
+    } else {
+      this.showToast('请上传图片文件', 'error');
+    }
+  }
+
+  // 加载图片
+  loadImage(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        this.currentImage = img;
+        this.imageData = file;
+        this.displayImage();
+        this.analyzeBtn.disabled = false;
+        this.uploadPlaceholder.style.display = 'none';
+        this.imageDisplay.style.display = 'block';
+        this.showToast('图片上传成功', 'success');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 显示图片（自动适配并占满容器）
+  displayImage() {
+    const container = this.imageWrapper;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    
+    const imgWidth = this.currentImage.width;
+    const imgHeight = this.currentImage.height;
+    
+    // 计算缩放比例，确保图片占满容器
+    const scaleX = containerWidth / imgWidth;
+    const scaleY = containerHeight / imgHeight;
+    const scale = Math.max(scaleX, scaleY);
+    
+    const displayWidth = imgWidth * scale;
+    const displayHeight = imgHeight * scale;
+    
+    // 设置canvas尺寸
+    this.imageCanvas.width = displayWidth;
+    this.imageCanvas.height = displayHeight;
+    
+    // 绘制图片
+    this.ctx.drawImage(this.currentImage, 0, 0, displayWidth, displayHeight);
+    
+    // 保存缩放信息
+    this.scale = scale;
+    this.displayWidth = displayWidth;
+    this.displayHeight = displayHeight;
+  }
+
+  // 调用AI分析
+  async analyzeCharacter() {
+    if (!this.imageData) {
+      this.showToast('请先上传图片', 'error');
+      return;
+    }
+
+    this.showLoading(true);
+    
+    const formData = new FormData();
+    formData.append('image', this.imageData);
+
+    try {
+      const response = await fetch('/api/calligraphy/analyze', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        this.annotations = data.keypoints || [];
+        this.renderAnnotations();
+        this.drawKeypoints();
+        this.saveBtn.disabled = false;
+        this.showToast('分析完成！', 'success');
+      } else {
+        throw new Error(data.error || '分析失败');
+      }
+    } catch (error) {
+      console.error('分析错误:', error);
+      this.showToast('分析失败: ' + error.message, 'error');
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  // 渲染注释列表
+  renderAnnotations() {
+    if (this.annotations.length === 0) {
+      this.annotationsList.innerHTML = `
+        <div class="empty-state">
+          <p>暂无注释</p>
+          <p class="hint">上传字帖图片后，点击"智能解读"按钮自动生成临摹要点</p>
+        </div>
+      `;
+      this.annotationCount.textContent = '0 个要点';
+      return;
+    }
+
+    this.annotationCount.textContent = `${this.annotations.length} 个要点`;
+    
+    this.annotationsList.innerHTML = this.annotations.map((anno, index) => `
+      <div class="annotation-item" data-id="${anno.id}">
+        <div class="annotation-header">
+          <div class="annotation-number">${anno.id}</div>
+          <div class="annotation-title">${anno.description || `要点 ${anno.id}`}</div>
+        </div>
+        <div class="annotation-content">
+          <textarea 
+            class="annotation-input" 
+            data-id="${anno.id}"
+            placeholder="在此编辑临摹要点..."
+          >${anno.tips || ''}</textarea>
+          <div class="annotation-coords">
+            <div class="coord-item">
+              <span class="coord-label">X:</span>
+              <span>${(anno.x * 100).toFixed(1)}%</span>
+            </div>
+            <div class="coord-item">
+              <span class="coord-label">Y:</span>
+              <span>${(anno.y * 100).toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // 绑定输入事件
+    const textareas = this.annotationsList.querySelectorAll('.annotation-input');
+    textareas.forEach(textarea => {
+      textarea.addEventListener('input', (e) => {
+        const id = parseInt(e.target.dataset.id);
+        const anno = this.annotations.find(a => a.id === id);
+        if (anno) {
+          anno.tips = e.target.value;
+        }
+      });
+    });
+
+    // 绑定点击事件（高亮对应的坐标点）
+    const items = this.annotationsList.querySelectorAll('.annotation-item');
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        items.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+  }
+
+  // 绘制关键点
+  drawKeypoints() {
+    // 清除之前的点
+    this.clearKeypoints();
+    
+    // 重绘图片
+    this.ctx.drawImage(this.currentImage, 0, 0, this.displayWidth, this.displayHeight);
+    
+    // 绘制所有关键点
+    this.annotations.forEach(anno => {
+      const x = anno.x * this.displayWidth;
+      const y = anno.y * this.displayHeight;
+      
+      // 绘制点
+      this.ctx.save();
+      this.ctx.fillStyle = '#8b4513';
+      this.ctx.strokeStyle = '#fff';
+      this.ctx.lineWidth = 2;
+      
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, 6, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+      
+      // 绘制编号
+      this.ctx.fillStyle = '#8b4513';
+      this.ctx.font = 'bold 12px sans-serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      
+      // 绘制编号背景圆圈
+      this.ctx.beginPath();
+      this.ctx.arc(x, y - 20, 10, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // 绘制编号文字
+      this.ctx.fillStyle = '#fff';
+      this.ctx.fillText(anno.id.toString(), x, y - 20);
+      
+      this.ctx.restore();
+    });
+  }
+
+  // 清除关键点
+  clearKeypoints() {
+    const existingPoints = this.imageWrapper.querySelectorAll('.keypoint');
+    existingPoints.forEach(point => point.remove());
+  }
+
+  // 处理鼠标按下
+  handleMouseDown(e) {
+    const rect = this.imageCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // 检查是否点击到某个关键点
+    for (const anno of this.annotations) {
+      const px = anno.x * this.displayWidth;
+      const py = anno.y * this.displayHeight;
+      const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+      
+      if (distance < 10) {
+        this.isDragging = true;
+        this.draggedPoint = anno;
+        this.imageCanvas.style.cursor = 'grabbing';
+        break;
+      }
+    }
+  }
+
+  // 处理鼠标移动
+  handleMouseMove(e) {
+    if (!this.isDragging || !this.draggedPoint) {
+      // 检查是否悬停在关键点上
+      const rect = this.imageCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      let onPoint = false;
+      for (const anno of this.annotations) {
+        const px = anno.x * this.displayWidth;
+        const py = anno.y * this.displayHeight;
+        const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+        
+        if (distance < 10) {
+          onPoint = true;
+          break;
+        }
+      }
+      
+      this.imageCanvas.style.cursor = onPoint ? 'grab' : 'crosshair';
+      return;
+    }
+    
+    // 拖拽更新坐标
+    const rect = this.imageCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    this.draggedPoint.x = Math.max(0, Math.min(1, x / this.displayWidth));
+    this.draggedPoint.y = Math.max(0, Math.min(1, y / this.displayHeight));
+    
+    // 重绘
+    this.drawKeypoints();
+    this.renderAnnotations();
+  }
+
+  // 处理鼠标释放
+  handleMouseUp() {
+    this.isDragging = false;
+    this.draggedPoint = null;
+    this.imageCanvas.style.cursor = 'crosshair';
+  }
+
+  // 保存注释
+  async saveAnnotations() {
+    if (this.annotations.length === 0) {
+      this.showToast('没有可保存的注释', 'error');
+      return;
+    }
+
+    this.showLoading(true);
+
+    try {
+      // 准备保存数据
+      const saveData = {
+        character: '单字',
+        keypoints: this.annotations,
+        timestamp: new Date().toISOString()
+      };
+
+      const response = await fetch('/api/calligraphy/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(saveData)
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        this.showToast('保存成功！', 'success');
+      } else {
+        throw new Error(data.error || '保存失败');
+      }
+    } catch (error) {
+      console.error('保存错误:', error);
+      this.showToast('保存失败: ' + error.message, 'error');
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  // 显示/隐藏加载提示
+  showLoading(show) {
+    this.loadingOverlay.style.display = show ? 'flex' : 'none';
+  }
+
+  // 显示提示消息
+  showToast(message, type = 'info') {
+    this.toast.textContent = message;
+    this.toast.className = `toast ${type} show`;
+    
+    setTimeout(() => {
+      this.toast.classList.remove('show');
+    }, 3000);
+  }
+}
+
+// 初始化应用
+document.addEventListener('DOMContentLoaded', () => {
+  new ReadPostApp();
+});
