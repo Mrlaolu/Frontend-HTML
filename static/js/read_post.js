@@ -11,6 +11,7 @@ class ReadPostApp {
     this.fileInput = document.getElementById('fileInput');
     this.selectFileBtn = document.getElementById('selectFileBtn');
     this.analyzeBtn = document.getElementById('analyzeBtn');
+    this.addAnnotationBtn = document.getElementById('addAnnotationBtn');
     this.saveBtn = document.getElementById('saveBtn');
     this.annotationsList = document.getElementById('annotationsList');
     this.annotationCount = document.getElementById('annotationCount');
@@ -34,9 +35,11 @@ class ReadPostApp {
     this.keypoints = [];
     this.isDragging = false;
     this.draggedPoint = null;
+    this.nextAnnotationId = 1;
 
     console.log('ReadPostApp 初始化成功');
     this.init();
+    this.updateActionButtons();
   }
 
   init() {
@@ -57,6 +60,7 @@ class ReadPostApp {
     // 按钮点击
     this.analyzeBtn.addEventListener('click', () => this.analyzeCharacter());
     this.saveBtn.addEventListener('click', () => this.saveAnnotations());
+    this.addAnnotationBtn.addEventListener('click', () => this.addAnnotation());
 
     // Canvas 交互
     this.imageCanvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
@@ -107,7 +111,10 @@ class ReadPostApp {
         console.log('图片加载完成，尺寸:', img.width, 'x', img.height);
         this.currentImage = img;
         this.imageData = file;
-        
+        this.annotations = [];
+        this.nextAnnotationId = 1;
+        this.renderAnnotations();
+
         // 先显示容器，再绘制图片
         this.uploadPlaceholder.style.display = 'none';
         this.imageDisplay.style.display = 'block';
@@ -116,6 +123,7 @@ class ReadPostApp {
         setTimeout(() => {
           this.displayImage();
           this.analyzeBtn.disabled = false;
+          this.updateActionButtons();
           this.showToast('图片上传成功', 'success');
         }, 50);
       };
@@ -207,9 +215,10 @@ class ReadPostApp {
       
       if (response.ok) {
         this.annotations = data.keypoints || [];
+        this.nextAnnotationId = this.getNextAnnotationId();
         this.renderAnnotations();
         this.drawKeypoints();
-        this.saveBtn.disabled = false;
+        this.updateActionButtons();
         this.showToast('分析完成！', 'success');
       } else {
         throw new Error(data.error || '分析失败');
@@ -240,8 +249,11 @@ class ReadPostApp {
     this.annotationsList.innerHTML = this.annotations.map((anno, index) => `
       <div class="annotation-item" data-id="${anno.id}">
         <div class="annotation-header">
-          <div class="annotation-number">${anno.id}</div>
-          <div class="annotation-title">${anno.description || `要点 ${anno.id}`}</div>
+          <div class="annotation-number">${index + 1}</div>
+          <div class="annotation-title">${anno.description || `要点 ${index + 1}`}</div>
+          <button type="button" class="annotation-remove-btn" data-id="${anno.id}" title="删除要点">
+            <span class="annotation-remove-icon" aria-hidden="true">❌</span>
+          </button>
         </div>
         <div class="annotation-content">
           <textarea 
@@ -272,6 +284,17 @@ class ReadPostApp {
         if (anno) {
           anno.tips = e.target.value;
         }
+        this.autoResizeTextarea(e.target);
+      });
+      this.autoResizeTextarea(textarea);
+    });
+
+    const removeButtons = this.annotationsList.querySelectorAll('.annotation-remove-btn');
+    removeButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = parseInt(button.dataset.id);
+        this.removeAnnotation(id);
       });
     });
 
@@ -402,6 +425,54 @@ class ReadPostApp {
     this.isDragging = false;
     this.draggedPoint = null;
     this.imageCanvas.style.cursor = 'crosshair';
+  }
+
+  getNextAnnotationId() {
+    if (this.annotations.length === 0) {
+      return 1;
+    }
+    return Math.max(...this.annotations.map(anno => Number(anno.id) || 0)) + 1;
+  }
+
+  addAnnotation() {
+    if (!this.currentImage) {
+      this.showToast('请先上传图片', 'error');
+      return;
+    }
+
+    const newAnnotation = {
+      id: this.nextAnnotationId++,
+      description: `要点 ${this.annotations.length + 1}`,
+      tips: '',
+      x: 0.5,
+      y: 0.5
+    };
+
+    this.annotations.push(newAnnotation);
+    this.renderAnnotations();
+    this.drawKeypoints();
+    this.updateActionButtons();
+  }
+
+  removeAnnotation(id) {
+    this.annotations = this.annotations.filter(anno => anno.id !== id);
+    this.renderAnnotations();
+    this.drawKeypoints();
+    this.updateActionButtons();
+  }
+
+  autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+
+  updateActionButtons() {
+    if (this.saveBtn) {
+      this.saveBtn.disabled = this.annotations.length === 0;
+    }
+    if (this.addAnnotationBtn) {
+      this.addAnnotationBtn.disabled = !this.currentImage;
+    }
   }
 
   // 保存注释

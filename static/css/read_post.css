@@ -13,7 +13,7 @@
 
 .read-post-layout {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 500px;
   gap: 24px;
   margin-bottom: 24px;
 }
@@ -175,6 +175,39 @@
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 2px solid var(--border);
+  gap: 12px;
+}
+
+.annotations-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.annotation-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--theme-brown);
+  border: 1px solid var(--theme-brown);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.annotation-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.annotation-action-btn:not(:disabled):hover {
+  background: var(--theme-brown);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
 }
 
 .annotations-header h3 {
@@ -244,6 +277,29 @@
   margin-bottom: 12px;
 }
 
+.annotation-remove-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.annotation-remove-btn:focus {
+  outline: none;
+}
+
+.annotation-remove-btn:hover {
+  transform: scale(1.1);
+}
+
+.annotation-remove-icon {
+  font-size: 16px;
+  color: #c84b31;
+}
+
 .annotation-number {
   width: 28px;
   height: 28px;
@@ -277,15 +333,16 @@
 
 .annotation-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 16px;
   font-size: 14px;
   font-family: inherit;
   color: var(--ink-black);
   background: #fff;
-  resize: vertical;
-  min-height: 80px;
+  resize: none;
+  min-height: 72px;
+  line-height: 1.6;
   transition: all 0.2s ease;
 }
 
