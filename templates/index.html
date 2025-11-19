@@ -1,29 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>iCalligraphy · 发现与分享书法之美</title>
-    <link rel="stylesheet" href="/static/css/main.css" />
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="container header-inner">
-        <a class="brand" href="/"><span class="brand-logo">藝</span><span class="brand-text">iCalligraphy</span></a>
-        <nav class="nav">
-          <a href="/" class="active">首页</a>
-          <a href="/work-upload">作品上传</a>
-          <a href="/search">检索</a>
-          <a href="/my-collections">我的字集</a>
-          <a href="/read-post">读帖</a>
-          <a href="/profile">个人中心</a>
-          <a href="/community">社区</a>
-          <a href="/review-center">审核中心</a>
-          <a href="/auth" class="auth-link">登录/注册</a>
-        </nav>
-      </div>
-    </header>
+{% extends "base.html" %}
 
+{% block title %}iCalligraphy · 发现与分享书法之美{% endblock %}
+
+{% block content %}
     <main>
       <!-- 英雄区 -->
       <section class="hero">
@@ -173,14 +152,4 @@
         </div>
       </section>
     </main>
-
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <p>© 2025 iCalligraphy · 传统与创新并重</p>
-        <p class="note">本页为示例界面，真实数据与交互将在后续接入。</p>
-      </div>
-    </footer>
-
-    <script src="/static/js/main.js" defer></script>
-  </body>
-</html>
+{% endblock %}

@@ -1,29 +1,12 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>作品详情 · iCalligraphy</title>
-    <link rel="stylesheet" href="/static/css/main.css" />
-    <link rel="stylesheet" href="/static/css/work_detail.css" />
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="container header-inner">
-        <a class="brand" href="/"><span class="brand-logo">藝</span><span class="brand-text">iCalligraphy</span></a>
-        <nav class="nav">
-          <a href="/">首页</a>
-          <a href="/work-upload">作品上传</a>
-          <a href="/search">检索</a>
-          <a href="/my-collections">我的字集</a>
-          <a href="/profile">个人中心</a>
-          <a href="/community">社区</a>
-          <a href="/review-center">审核中心</a>
-          <a href="/auth" class="auth-link">登录/注册</a>
-        </nav>
-      </div>
-    </header>
+{% extends "base.html" %}
 
+{% block title %}作品详情 · iCalligraphy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/work_detail.css" />
+{% endblock %}
+
+{% block content %}
     <main class="detail-main">
       <!-- 返回导航 -->
       <div class="container">
@@ -43,26 +26,26 @@
           <div class="viewer-toolbar">
             <div class="toolbar-group">
               <button type="button" class="tool-btn" id="zoomInBtn" title="放大 (Ctrl+Plus)">
-                <span class="tool-icon">🔍+</span>
+                <span class="tool-icon">+</span>
               </button>
               <button type="button" class="tool-btn" id="zoomOutBtn" title="缩小 (Ctrl+Minus)">
-                <span class="tool-icon">🔍-</span>
+                <span class="tool-icon">-</span>
               </button>
               <button type="button" class="tool-btn" id="resetZoomBtn" title="重置 (Ctrl+0)">
-                <span class="tool-icon">↻</span>
+                <span class="tool-icon"></span>
               </button>
               <span class="zoom-level" id="zoomLevel">100%</span>
             </div>
             <div class="toolbar-divider"></div>
             <div class="toolbar-group">
               <button type="button" class="tool-btn" id="fitWidthBtn" title="适应宽度">
-                <span class="tool-icon">⬌</span>
+                <span class="tool-icon"></span>
               </button>
               <button type="button" class="tool-btn" id="fitHeightBtn" title="适应高度">
-                <span class="tool-icon">⬍</span>
+                <span class="tool-icon"></span>
               </button>
               <button type="button" class="tool-btn" id="fullscreenBtn" title="全屏 (F11)">
-                <span class="tool-icon">⛶</span>
+                <span class="tool-icon"></span>
               </button>
             </div>
             <div class="toolbar-divider"></div>
@@ -92,7 +75,7 @@
 
           <!-- 操作提示 -->
           <div class="viewer-hints">
-            <p>💡 提示：拖拽图片移动位置 · 滚轮缩放 · 鼠标悬停单字查看详情</p>
+            <p> 提示：拖拽图片移动位置 · 滚轮缩放 · 鼠标悬停单字查看详情</p>
           </div>
         </div>
       </section>
@@ -143,15 +126,15 @@
               <!-- 操作按钮 -->
               <div class="action-buttons">
                 <button type="button" class="btn btn-primary" id="collectBtn">
-                  <span class="btn-icon">⭐</span>
+                  <span class="btn-icon"></span>
                   <span>收藏作品</span>
                 </button>
                 <button type="button" class="btn btn-outline" id="addToCollectionBtn">
-                  <span class="btn-icon">📚</span>
+                  <span class="btn-icon"></span>
                   <span>添加到字集</span>
                 </button>
                 <button type="button" class="btn btn-outline" id="downloadBtn">
-                  <span class="btn-icon">⬇</span>
+                  <span class="btn-icon"></span>
                   <span>下载图片</span>
                 </button>
               </div>
@@ -313,7 +296,7 @@
                 <p class="comment-text">兰亭序的行书韵律真是绝妙，每个字都流畅自然，笔势连贯却又不失章法。王羲之不愧是书圣！</p>
                 <div class="comment-actions">
                   <button type="button" class="comment-action">
-                    <span class="action-icon">👍</span>
+                    <span class="action-icon"></span>
                     <span class="action-count">23</span>
                   </button>
                   <button type="button" class="comment-action">
@@ -333,7 +316,7 @@
                 <p class="comment-text">临摹了无数遍，每次都有新的感悟。天下第一行书，名不虚传！</p>
                 <div class="comment-actions">
                   <button type="button" class="comment-action">
-                    <span class="action-icon">👍</span>
+                    <span class="action-icon"></span>
                     <span class="action-count">18</span>
                   </button>
                   <button type="button" class="comment-action">
@@ -380,15 +363,8 @@
         </div>
       </div>
     </div>
+{% endblock %}
 
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <p>© 2025 iCalligraphy · 传统与创新并重</p>
-        <p class="note">本页为示例界面，真实数据与交互将在后续接入。</p>
-      </div>
-    </footer>
-
-    <script src="/static/js/main.js" defer></script>
-    <script src="/static/js/work_detail.js" defer></script>
-  </body>
-</html>
+{% block extra_js %}
+<script src="/static/js/work_detail.js" defer></script>
+{% endblock %}

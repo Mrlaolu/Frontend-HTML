@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}iCalligraphy · 发现与分享书法之美{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/main.css" />
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="/"><span class="brand-logo">藝</span><span class="brand-text">iCalligraphy</span></a>
+        <nav class="nav">
+          <a href="/" {% if active_page == 'index' %}class="active"{% endif %}>首页</a>
+          <a href="/work-upload" {% if active_page == 'work_upload' %}class="active"{% endif %}>作品上传</a>
+          <a href="/search" {% if active_page == 'search' %}class="active"{% endif %}>检索</a>
+          <a href="/my-collections" {% if active_page == 'my_collections' %}class="active"{% endif %}>我的字集</a>
+          <a href="/read-post" {% if active_page == 'read_post' %}class="active"{% endif %}>读帖</a>
+          <a href="/profile" {% if active_page == 'profile' %}class="active"{% endif %}>个人中心</a>
+          <a href="/community" {% if active_page == 'community' %}class="active"{% endif %}>社区</a>
+          <a href="/review-center" {% if active_page == 'review_center' %}class="active"{% endif %}>审核中心</a>
+          <a href="/auth" class="auth-link">登录/注册</a>
+        </nav>
+      </div>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© 2025 iCalligraphy · 传统与创新并重</p>
+        {% block footer_note %}
+        <p class="note">本页为示例界面，真实数据与交互将在后续接入。</p>
+        {% endblock %}
+      </div>
+    </footer>
+
+    <script src="/static/js/main.js" defer></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
